@@ -7,6 +7,12 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Grid>
+        <TextBlock HorizontalAlignment="Left" Margin="650,5,0,0" TextWrapping="Wrap" Text="채팅 테스트 클라이언트" VerticalAlignment="Top" RenderTransformOrigin="0.493,0.563"/>
+        <StackPanel>
+            <Label Content="Server"/>
+            <ComboBox x:Name="ComboBoxList" Width="209" HorizontalAlignment="Left" SelectionChanged="ComboBoxList_SelectionChanged"/>
+        </StackPanel>
+        <Button x:Name="ServerConnectButton" Content="연결" Margin="219,20,469,369" Click="ServerConnectButton_Click"/>
 
     </Grid>
 </Window>
