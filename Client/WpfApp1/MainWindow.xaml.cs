@@ -36,7 +36,15 @@ namespace WpfApp1
             InitializeComponent();
             
             ComboBoxList.ItemsSource = ServerList;
-          
+            client.MessageReceived += OnMessageReceived;
+        }
+        private void OnMessageReceived(string message)
+        {
+            // Dispatcher를 사용하여 UI 업데이트
+            Dispatcher.Invoke(() =>
+            {
+                ChatBox.AppendText(message + Environment.NewLine);
+            });
         }
 
         private void ComboBoxList_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -58,57 +66,64 @@ namespace WpfApp1
                 MessageBox.Show("Do not Select Server!!!!");
             }
         }
-
         public class Client
         {
-            private WebSocket testWebSocket;
-            public Client(String ServerIP)
+            private ClientWebSocket _webSocket;
+            // 메시지를 전달하기 위한 이벤트 정의
+            public event Action<string> MessageReceived;
+
+            public Client(string serverIP)
             {
-                StartConnectAsync(ServerIP);
+                _webSocket = new ClientWebSocket();
+                StartConnectAsync(serverIP);
             }
 
-            public async Task StartConnectAsync(String ServerIP)
+            public async Task StartConnectAsync(string serverIP)
             {
-                var connectTimeout = new CancellationTokenSource();
-                connectTimeout.CancelAfter(2000);
-                Uri uri = new Uri(ServerIP);
-
-                await ws.ConnectAsync(uri, connectTimeout.Token);
-                if (ws.State != System.Net.WebSockets.WebSocketState.Open)
+                try
                 {
+                    var connectTimeout = new CancellationTokenSource();
+                    connectTimeout.CancelAfter(2000);
+                    Uri uri = new Uri(serverIP);
 
-                    Console.WriteLine($"Failed to connect: {ServerIP}");
+                    await _webSocket.ConnectAsync(uri, connectTimeout.Token);
+                    if (_webSocket.State != WebSocketState.Open)
+                    {
+                        Console.WriteLine($"Failed to connect: {serverIP}");
+                        return;
+                    }
 
-                    return;
+                    Console.WriteLine($"Connected to {serverIP}");
 
+                    // 메시지 리시브
+                    await ReceiveMessagesAsync(_webSocket);
                 }
-             
-
-                if (ws.State != WebSocketState.Open)
+                catch (Exception ex)
                 {
-                    // Connect error
-                }
-
-                while(ws.State == WebSocketState.Open)
-                {
-                    string recvMsg = await Read(ws);
-                    
+                    Console.WriteLine($"Exception: {ex.Message}");
                 }
             }
 
+            private async Task ReceiveMessagesAsync(ClientWebSocket webSocket)
+            {
+                var buffer = new byte[1024 * 4];
+                while (webSocket.State == WebSocketState.Open)
+                {
+                    var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                    string recvMsg = Encoding.UTF8.GetString(buffer, 0, result.Count);
+
+                    // 이벤트를 통해 메시지를 전달
+                    MessageReceived?.Invoke(recvMsg);
+
+                    Console.WriteLine($"Received: {recvMsg}");
+                }
+            }
         }
 
-        private static async Task<string> Read(ClientWebSocket ws)
-        {
-            var buffer = new byte[1024];
-            var result = await ws.ReceiveAsync(buffer, CancellationToken.None);
-            return Encoding.UTF8.GetString(buffer, 0, result.Count);
-        }
-
-        private void SendButton_Click(object sender, RoutedEventArgs e)
+        private async void SendButton_Click(object sender, RoutedEventArgs e)
         {
             var message = MyMessage.Text;
-            MessageSendAsync(ws, message);
+            await MessageSendAsync(ws, message);
             MyMessage.Clear();
         }
 
