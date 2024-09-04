@@ -12,7 +12,11 @@
             <Label Content="Server"/>
             <ComboBox x:Name="ComboBoxList" Width="209" HorizontalAlignment="Left" SelectionChanged="ComboBoxList_SelectionChanged"/>
         </StackPanel>
+        
+        <Button x:Name="SendButton" Content="보내기" Margin="334,272,267,89" Click="SendButton_Click"/>
         <Button x:Name="ServerConnectButton" Content="연결" Margin="219,20,469,369" Click="ServerConnectButton_Click"/>
+        <TextBox x:Name="MyMessage" HorizontalAlignment="Left" Margin="49,271,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="257" TextChanged="MyMessage_TextChanged" Height="75"/>
+        <TextBox x:Name="ChatBox" HorizontalAlignment="Left" Margin="49,75,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="484" Height="166" TextChanged="ChatBox_TextChanged" Text="{Binding SomeProperty, UpdateSourceTrigger=PropertyChanged}"  />
 
     </Grid>
 </Window>
