@@ -28,7 +28,7 @@ namespace WpfApp1
         public List<String> ServerList { get; set; } = new List<String>(){ "ws://localhost:8080" };
         private String ServerIP = null;
         private Client client;
-        public static ClientWebSocket ws = new ClientWebSocket();
+        public static ClientWebSocket ws;
         private String appendmessage;
         
         public MainWindow()
@@ -36,7 +36,7 @@ namespace WpfApp1
             InitializeComponent();
             
             ComboBoxList.ItemsSource = ServerList;
-            client.MessageReceived += OnMessageReceived;
+            
         }
         private void OnMessageReceived(string message)
         {
@@ -60,6 +60,7 @@ namespace WpfApp1
             if(ServerIP != null)
             {
                 client = new Client(ServerIP);
+                client.MessageReceived += OnMessageReceived;
             }
             else
             {
@@ -68,13 +69,13 @@ namespace WpfApp1
         }
         public class Client
         {
-            private ClientWebSocket _webSocket;
+            //private ClientWebSocket _webSocket;
             // 메시지를 전달하기 위한 이벤트 정의
             public event Action<string> MessageReceived;
 
             public Client(string serverIP)
             {
-                _webSocket = new ClientWebSocket();
+                ws = new ClientWebSocket();
                 StartConnectAsync(serverIP);
             }
 
@@ -86,8 +87,8 @@ namespace WpfApp1
                     connectTimeout.CancelAfter(2000);
                     Uri uri = new Uri(serverIP);
 
-                    await _webSocket.ConnectAsync(uri, connectTimeout.Token);
-                    if (_webSocket.State != WebSocketState.Open)
+                    await ws.ConnectAsync(uri, connectTimeout.Token);
+                    if (ws.State != WebSocketState.Open)
                     {
                         Console.WriteLine($"Failed to connect: {serverIP}");
                         return;
@@ -96,7 +97,7 @@ namespace WpfApp1
                     Console.WriteLine($"Connected to {serverIP}");
 
                     // 메시지 리시브
-                    await ReceiveMessagesAsync(_webSocket);
+                    await ReceiveMessagesAsync(ws);
                 }
                 catch (Exception ex)
                 {
