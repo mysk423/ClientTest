@@ -6,6 +6,8 @@ using System.Linq;
 using System.Net.WebSockets;
 using System.Security.Policy;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -17,6 +19,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using static WpfApp1.MainWindow;
 
 namespace WpfApp1
 {
@@ -31,6 +34,7 @@ namespace WpfApp1
         public static ClientWebSocket ws;
         private String appendmessage;
         private bool selectServer = false;
+        private String UserIDText = null;
         
         public MainWindow()
         {
@@ -74,6 +78,11 @@ namespace WpfApp1
             }
             
         }
+        struct DataPacket {
+            public string Name { get; set; }
+            public string Message { get; set; }
+        }
+            
         public class Client
         {
             private ClientWebSocket _webSocket;
@@ -88,6 +97,7 @@ namespace WpfApp1
 
             public async Task StartConnectAsync(string serverIP)
             {
+                
                 try
                 {
                     var connectTimeout = new CancellationTokenSource();
@@ -131,13 +141,20 @@ namespace WpfApp1
         private async void SendButton_Click(object sender, RoutedEventArgs e)
         {
             var message = MyMessage.Text;
-            await MessageSendAsync(ws, message);
+            var name = UserID.Text;
+            await MessageSendAsync(ws, message, name);
             MyMessage.Clear();
         }
 
-        private async Task MessageSendAsync(ClientWebSocket ws, String Message)
+        private async Task MessageSendAsync(ClientWebSocket ws, String Message, String Name)
         {
-            await ws.SendAsync(Encoding.UTF8.GetBytes(Message), WebSocketMessageType.Text, true, CancellationToken.None);
+            var packet = new DataPacket { Name = Name, Message = Message };
+
+            var jsonString = JsonSerializer.Serialize(packet);
+
+            var buffer = Encoding.UTF8.GetBytes(jsonString);
+            await ws.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
+            //await ws.SendAsync(Encoding.UTF8.GetBytes(Message), WebSocketMessageType.Text, true, CancellationToken.None);
         }
 
         private void MyMessage_TextChanged(object sender, TextChangedEventArgs e)
@@ -158,6 +175,7 @@ namespace WpfApp1
                 SendButton_Click(sender, e);
             }
         }
+
     }
 
 }
