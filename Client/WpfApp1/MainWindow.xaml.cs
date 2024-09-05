@@ -25,11 +25,12 @@ namespace WpfApp1
     /// </summary>
     public partial class MainWindow : Window
     {
-        public List<String> ServerList { get; set; } = new List<String>(){ "ws://localhost:8080" };
+        public List<String> ServerList { get; set; } = new List<String>(){ "ws://192.168.5.103:8080" };
         private String ServerIP = null;
         private Client client;
         public static ClientWebSocket ws;
         private String appendmessage;
+        private bool selectServer = false;
         
         public MainWindow()
         {
@@ -57,19 +58,25 @@ namespace WpfApp1
 
         private void ServerConnectButton_Click(object sender, RoutedEventArgs e)
         {
-            if(ServerIP != null)
+            if (!selectServer)
             {
-                client = new Client(ServerIP);
-                client.MessageReceived += OnMessageReceived;
+                if (ServerIP != null)
+                {
+                    client = new Client(ServerIP);
+                    client.MessageReceived += OnMessageReceived;
+                    selectServer = true;
+                    MessageBox.Show("서버 선택 완료");
+                }
             }
             else
             {
-                MessageBox.Show("Do not Select Server!!!!");
+                MessageBox.Show("서버 선택 불가");
             }
+            
         }
         public class Client
         {
-            //private ClientWebSocket _webSocket;
+            private ClientWebSocket _webSocket;
             // 메시지를 전달하기 위한 이벤트 정의
             public event Action<string> MessageReceived;
 
@@ -138,9 +145,18 @@ namespace WpfApp1
 
         }
 
+
         private void ChatBox_TextChanged(object sender, TextChangedEventArgs e)
         {
 
+        }
+
+        private void MyMessage_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                SendButton_Click(sender, e);
+            }
         }
     }
 
